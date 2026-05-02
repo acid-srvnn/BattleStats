@@ -46,6 +46,31 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
   }
 
 
+  Color? _getScoreColor(int score, List<int> allScores, ScoreType scoreType) {
+    if (allScores.isEmpty) return null;
+    final uniqueScores = allScores.toSet().toList();
+    
+    if (scoreType == ScoreType.highScoreWins) {
+      uniqueScores.sort((a, b) => b.compareTo(a)); // Higher is better
+    } else {
+      uniqueScores.sort((a, b) => a.compareTo(b)); // Lower is better
+    }
+    
+    if (uniqueScores.length < 2) return null;
+
+    if (score == uniqueScores.first) return Colors.green.withOpacity(0.2);
+    if (score == uniqueScores.last) return Colors.red.withOpacity(0.2);
+
+    if (uniqueScores.length >= 3) {
+      if (score == uniqueScores[1]) return Colors.blue.withOpacity(0.2);
+    }
+    if (uniqueScores.length >= 4) {
+      if (score == uniqueScores[uniqueScores.length - 2]) return Colors.orange.withOpacity(0.2);
+    }
+
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final scores = currentGame.getPlayerScores();
@@ -236,6 +261,7 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                             height: 32,
                             decoration: BoxDecoration(
                               border: Border.all(color: Colors.grey, width: 0.5),
+                              color: _getScoreColor(scores[playerIndex], scores, currentGame.scoreType),
                             ),
                             child: Center(
                               child: Text(
@@ -299,9 +325,12 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                                       // Auto-rotate starter: R1->player 0, R2->player 1, etc
                                       final starterDisplayIndex = roundIndex % playerOrder.length;
                                       final starterPlayerIndex = playerOrder[starterDisplayIndex];
-                                      final isStartingPlayer = playerIndex == starterPlayerIndex;
-
+                                      final round = currentGame.rounds[roundIndex];
+                                      final isStartingPlayer = player.id == round.startingPlayerId;
                                       final isEditing = _editingPlayerIndex == playerIndex && _editingRoundIndex == roundIndex;
+                                      final allScoresInRound = currentGame.players
+                                          .map((p) => currentGame.rounds[roundIndex].playerScores[p.id] ?? 0)
+                                          .toList();
 
                                       return GestureDetector(
                                         onTap: () => _startEditing(
@@ -309,6 +338,7 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                                           roundIndex,
                                           roundScores[roundIndex],
                                         ),
+                                        onLongPress: () => _setStartingPlayer(roundIndex, player.id),
                                         child: Container(
                                           width: 50,
                                           height: 32,
@@ -317,7 +347,9 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                                               color: isEditing ? Colors.blue : Colors.grey,
                                               width: isEditing ? 2 : 0.5,
                                             ),
-                                            color: isEditing ? Colors.blue.withOpacity(0.1) : Colors.transparent,
+                                            color: isEditing
+                                                ? Colors.blue.withOpacity(0.1)
+                                                : _getScoreColor(roundScores[roundIndex], allScoresInRound, currentGame.scoreType),
                                           ),
                                           child: Stack(
                                             children: [
@@ -445,10 +477,48 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
     }
   }
 
+  void _setStartingPlayer(int roundIndex, String playerId) async {
+    final updatedRounds = [...currentGame.rounds];
+    updatedRounds[roundIndex] = updatedRounds[roundIndex].copyWith(startingPlayerId: playerId);
+
+    setState(() {
+      currentGame = currentGame.copyWith(rounds: updatedRounds);
+    });
+
+    await gameManager.updateGame(currentGame);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Starting player updated! 🟢'),
+        duration: Duration(seconds: 1),
+      ),
+    );
+  }
+
   Future<void> _addRound() async {
+    String? nextStartingPlayerId;
+
+    if (currentGame.rounds.isNotEmpty) {
+      final lastRound = currentGame.rounds.last;
+      final lastStarterId = lastRound.startingPlayerId;
+
+      if (lastStarterId != null) {
+        // Find current display index of last starter
+        final lastStarterPlayerIndex = currentGame.players.indexWhere((p) => p.id == lastStarterId);
+        final lastStarterDisplayIndex = playerOrder.indexOf(lastStarterPlayerIndex);
+
+        // Next player in visual order
+        final nextDisplayIndex = (lastStarterDisplayIndex + 1) % playerOrder.length;
+        nextStartingPlayerId = currentGame.players[playerOrder[nextDisplayIndex]].id;
+      }
+    }
+
+    // Default for first round or fallback
+    nextStartingPlayerId ??= currentGame.players[playerOrder[0]].id;
+
     final newRound = Round(
       roundNumber: currentGame.rounds.length + 1,
       playerScores: {},
+      startingPlayerId: nextStartingPlayerId,
     );
 
     setState(() {

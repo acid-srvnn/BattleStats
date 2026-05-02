@@ -159,7 +159,13 @@ class _NewGameScreenState extends State<NewGameScreen> {
       players: selectedPlayers,
       scoreType: selectedScoreType,
       outValue: outValue,
-      rounds: [Round(roundNumber: 1, playerScores: {})],
+      rounds: [
+        Round(
+          roundNumber: 1,
+          playerScores: {},
+          startingPlayerId: selectedPlayers[0].id,
+        )
+      ],
       createdAt: DateTime.now(),
     );
 
