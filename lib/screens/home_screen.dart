@@ -13,15 +13,32 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late GameManager gameManager;
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
     gameManager = GameManager();
+    _initializeGameManager();
+  }
+
+  Future<void> _initializeGameManager() async {
+    await gameManager.initialize();
+    setState(() {
+      _isInitialized = true;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!_isInitialized) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     final playerWithMostGames = gameManager.getPlayerWithMostGames();
     final playerWithMostHighScores = gameManager.getPlayerWithMostHighScores();
 
