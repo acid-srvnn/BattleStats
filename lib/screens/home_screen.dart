@@ -107,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               backgroundColor: playerWithMostGames.color,
                               radius: 24,
                               child: Text(
-                                playerWithMostGames.name[0].toUpperCase(),
+                                playerWithMostGames.initials,
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
@@ -152,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               backgroundColor: playerWithMostHighScores.color,
                               radius: 24,
                               child: Text(
-                                playerWithMostHighScores.name[0].toUpperCase(),
+                                playerWithMostHighScores.initials,
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,

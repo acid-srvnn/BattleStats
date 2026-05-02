@@ -37,6 +37,14 @@ class Player {
 
   @override
   String toString() => 'Player(id: $id, name: $name)';
+
+  String get initials {
+    if (name.isEmpty) return "";
+    if (name.length >= 2) {
+      return name.substring(0, 2).toUpperCase();
+    }
+    return name.toUpperCase();
+  }
 }
 
 // Predefined colors for players

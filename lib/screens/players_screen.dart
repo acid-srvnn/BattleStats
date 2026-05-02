@@ -41,7 +41,7 @@ class _PlayersScreenState extends State<PlayersScreen> {
                   leading: CircleAvatar(
                     backgroundColor: player.color,
                     child: Text(
-                      player.name[0].toUpperCase(),
+                      player.initials,
                       style: const TextStyle(color: Colors.white),
                     ),
                   ),

@@ -61,7 +61,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                   backgroundColor: playerWithMostGames.color,
                                   radius: 30,
                                   child: Text(
-                                    playerWithMostGames.name[0].toUpperCase(),
+                                    playerWithMostGames.initials,
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 24,
@@ -119,8 +119,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                                       playerWithMostHighScores.color,
                                   radius: 30,
                                   child: Text(
-                                    playerWithMostHighScores.name[0]
-                                        .toUpperCase(),
+                                    playerWithMostHighScores.initials,
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 24,
@@ -179,7 +178,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                           leading: CircleAvatar(
                             backgroundColor: player.color,
                             child: Text(
-                              player.name[0].toUpperCase(),
+                              player.initials,
                               style: const TextStyle(color: Colors.white),
                             ),
                           ),

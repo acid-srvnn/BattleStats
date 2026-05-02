@@ -33,13 +33,6 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
     return name;
   }
 
-  // Helper function to get 2-letter avatar from player name
-  String _getPlayerInitials(String name) {
-    if (name.length >= 2) {
-      return name.substring(0, 2).toUpperCase();
-    }
-    return name.toUpperCase();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +109,7 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                                       backgroundColor: player.color,
                                       radius: 10,
                                       child: Text(
-                                        player.name[0].toUpperCase(),
+                                        player.initials,
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 9,
@@ -166,7 +159,7 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                                           backgroundColor: player.color,
                                           radius: 10,
                                           child: Text(
-                                            player.name[0].toUpperCase(),
+                                            player.initials,
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 9,
