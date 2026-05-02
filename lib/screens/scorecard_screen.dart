@@ -25,6 +25,22 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
     playerOrder = List.generate(currentGame.players.length, (i) => i);
   }
 
+  // Helper function to truncate player names to 10 characters with ellipsis
+  String _truncatePlayerName(String name, {int maxLength = 10}) {
+    if (name.length > maxLength) {
+      return '${name.substring(0, maxLength)}...';
+    }
+    return name;
+  }
+
+  // Helper function to get 2-letter avatar from player name
+  String _getPlayerInitials(String name) {
+    if (name.length >= 2) {
+      return name.substring(0, 2).toUpperCase();
+    }
+    return name.toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
     final scores = currentGame.getPlayerScores();
@@ -60,7 +76,7 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                     children: [
                       // Header
                       Container(
-                        width: 120,
+                        width: 100,
                         height: 32,
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey, width: 0.5),
@@ -86,7 +102,7 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                           return Draggable<int>(
                             data: displayIndex,
                             feedback: Container(
-                              width: 120,
+                              width: 100,
                               height: 32,
                               decoration: BoxDecoration(
                                 border: Border.all(color: Colors.grey, width: 0.5),
@@ -110,7 +126,7 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                                     const SizedBox(width: 4),
                                     Expanded(
                                       child: Text(
-                                        player.name,
+                                        _truncatePlayerName(player.name),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(fontSize: 12),
@@ -129,7 +145,7 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                               },
                               builder: (context, candidateData, rejectedData) {
                                 return Container(
-                                  width: 120,
+                                  width: 100,
                                   height: 32,
                                   decoration: BoxDecoration(
                                     border: Border.all(
@@ -160,7 +176,7 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                                         const SizedBox(width: 4),
                                         Expanded(
                                           child: Text(
-                                            player.name,
+                                            _truncatePlayerName(player.name),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: const TextStyle(fontSize: 12),
@@ -335,7 +351,7 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-            'Edit Score - ${currentGame.players[playerIndex].name} - Round ${roundIndex + 1}'),
+            'Edit Score - ${_truncatePlayerName(currentGame.players[playerIndex].name)} - Round ${roundIndex + 1}'),
         content: TextField(
           controller: scoreController,
           keyboardType: TextInputType.number,
