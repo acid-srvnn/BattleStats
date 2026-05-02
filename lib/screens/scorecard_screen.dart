@@ -52,7 +52,7 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
           children: [
             // Scorecard Table with fixed columns and scrollable rounds
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(4.0),
               child: Row(
                 children: [
                   // Fixed left columns (Player info) - Reorderable
@@ -60,24 +60,20 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                     children: [
                       // Header
                       Container(
-                        width: 200,
-                        height: 56,
+                        width: 120,
+                        height: 32,
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
+                          border: Border.all(color: Colors.grey, width: 0.5),
                           color: Colors.grey[200],
                         ),
                         child: const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Player',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                                maxLines: 2,
-                              ),
-                            ],
+                          padding: EdgeInsets.all(2.0),
+                          child: Center(
+                            child: Text(
+                              'Player',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              maxLines: 1,
+                            ),
                           ),
                         ),
                       ),
@@ -90,33 +86,34 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                           return Draggable<int>(
                             data: displayIndex,
                             feedback: Container(
-                              width: 200,
-                              height: 56,
+                              width: 120,
+                              height: 32,
                               decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
+                                border: Border.all(color: Colors.grey, width: 0.5),
                                 color: Colors.grey[300],
                               ),
                               child: Padding(
-                                padding: const EdgeInsets.all(8.0),
+                                padding: const EdgeInsets.all(2.0),
                                 child: Row(
                                   children: [
                                     CircleAvatar(
                                       backgroundColor: player.color,
-                                      radius: 14,
+                                      radius: 10,
                                       child: Text(
                                         player.name[0].toUpperCase(),
                                         style: const TextStyle(
                                           color: Colors.white,
-                                          fontSize: 10,
+                                          fontSize: 9,
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 4),
                                     Expanded(
                                       child: Text(
                                         player.name,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(fontSize: 12),
                                       ),
                                     ),
                                   ],
@@ -132,40 +129,41 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                               },
                               builder: (context, candidateData, rejectedData) {
                                 return Container(
-                                  width: 200,
-                                  height: 56,
+                                  width: 120,
+                                  height: 32,
                                   decoration: BoxDecoration(
                                     border: Border.all(
                                       color: candidateData.isNotEmpty
                                           ? Colors.blue
                                           : Colors.grey,
-                                      width: candidateData.isNotEmpty ? 2 : 1,
+                                      width: candidateData.isNotEmpty ? 1 : 0.5,
                                     ),
                                     color: candidateData.isNotEmpty
                                         ? Colors.blue.withOpacity(0.1)
                                         : Colors.transparent,
                                   ),
                                   child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
+                                    padding: const EdgeInsets.all(2.0),
                                     child: Row(
                                       children: [
                                         CircleAvatar(
                                           backgroundColor: player.color,
-                                          radius: 14,
+                                          radius: 10,
                                           child: Text(
                                             player.name[0].toUpperCase(),
                                             style: const TextStyle(
                                               color: Colors.white,
-                                              fontSize: 10,
+                                              fontSize: 9,
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(width: 8),
+                                        const SizedBox(width: 4),
                                         Expanded(
                                           child: Text(
                                             player.name,
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(fontSize: 12),
                                           ),
                                         ),
                                       ],
@@ -184,16 +182,16 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                     children: [
                       // Header
                       Container(
-                        width: 80,
-                        height: 56,
+                        width: 60,
+                        height: 32,
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
+                          border: Border.all(color: Colors.grey, width: 0.5),
                           color: Colors.grey[200],
                         ),
                         child: const Center(
                           child: Text(
                             'Total',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                           ),
                         ),
                       ),
@@ -203,15 +201,15 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                         (displayIndex) {
                           final playerIndex = playerOrder[displayIndex];
                           return Container(
-                            width: 80,
-                            height: 56,
+                            width: 60,
+                            height: 32,
                             decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
+                              border: Border.all(color: Colors.grey, width: 0.5),
                             ),
                             child: Center(
                               child: Text(
                                 '${scores[playerIndex]}',
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                               ),
                             ),
                           );
@@ -232,10 +230,10 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                                 currentGame.rounds.length,
                                 (roundIndex) {
                                   return Container(
-                                    width: 60,
-                                    height: 56,
+                                    width: 50,
+                                    height: 32,
                                     decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.grey),
+                                      border: Border.all(color: Colors.grey, width: 0.5),
                                       color: Colors.grey[200],
                                     ),
                                     child: Center(
@@ -243,6 +241,7 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                                         'R${roundIndex + 1}',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
+                                          fontSize: 13,
                                         ),
                                       ),
                                     ),
@@ -278,11 +277,10 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                                           roundScores[roundIndex],
                                         ),
                                         child: Container(
-                                          width: 60,
-                                          height: 56,
+                                          width: 50,
+                                          height: 32,
                                           decoration: BoxDecoration(
-                                            border:
-                                                Border.all(color: Colors.grey),
+                                            border: Border.all(color: Colors.grey, width: 0.5),
                                           ),
                                           child: Stack(
                                             children: [
@@ -290,20 +288,19 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                                                 child: Text(
                                                   '${roundScores[roundIndex]}',
                                                   textAlign: TextAlign.center,
+                                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                                                 ),
                                               ),
                                               if (isStartingPlayer)
                                                 Positioned(
-                                                  top: 2,
-                                                  right: 2,
+                                                  top: 1,
+                                                  right: 1,
                                                   child: Container(
-                                                    width: 10,
-                                                    height: 10,
-                                                    decoration:
-                                                        BoxDecoration(
+                                                    width: 8,
+                                                    height: 8,
+                                                    decoration: BoxDecoration(
                                                       color: Colors.green,
-                                                      shape:
-                                                          BoxShape.circle,
+                                                      shape: BoxShape.circle,
                                                     ),
                                                   ),
                                                 ),

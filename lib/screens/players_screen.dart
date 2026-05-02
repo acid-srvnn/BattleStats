@@ -66,7 +66,7 @@ class _PlayersScreenState extends State<PlayersScreen> {
     final nameController = TextEditingController();
     Color selectedColor = playerColors[0];
 
-    showDialog(
+    showDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
@@ -116,7 +116,7 @@ class _PlayersScreenState extends State<PlayersScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(context, false),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
@@ -128,7 +128,7 @@ class _PlayersScreenState extends State<PlayersScreen> {
                     color: selectedColor,
                   );
                   await gameManager.addPlayer(newPlayer);
-                  Navigator.pop(context);
+                  Navigator.pop(context, true);
                 }
               },
               child: const Text('Add'),
@@ -136,12 +136,15 @@ class _PlayersScreenState extends State<PlayersScreen> {
           ],
         ),
       ),
-    ).then((_) {
-      // Update parent screen after dialog closes
-      this.setState(() {});
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Player added! 🎮')),
-      );
+    ).then((added) {
+      if (added == true) {
+        this.setState(() {});
+        // Clear any existing snackbar and show new one immediately
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Player added! 🎮')),
+        );
+      }
     });
   }
 
@@ -149,7 +152,7 @@ class _PlayersScreenState extends State<PlayersScreen> {
     final nameController = TextEditingController(text: player.name);
     Color selectedColor = player.color;
 
-    showDialog(
+    showDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
@@ -198,7 +201,7 @@ class _PlayersScreenState extends State<PlayersScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(context, false),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
@@ -209,7 +212,7 @@ class _PlayersScreenState extends State<PlayersScreen> {
                     color: selectedColor,
                   );
                   await gameManager.updatePlayer(updatedPlayer);
-                  Navigator.pop(context);
+                  Navigator.pop(context, true);
                 }
               },
               child: const Text('Update'),
@@ -217,12 +220,15 @@ class _PlayersScreenState extends State<PlayersScreen> {
           ],
         ),
       ),
-    ).then((_) {
-      // Update parent screen after dialog closes
-      this.setState(() {});
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Player updated! ✨')),
-      );
+    ).then((updated) {
+      if (updated == true) {
+        this.setState(() {});
+        // Clear any existing snackbar and show new one immediately
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Player updated! ✨')),
+        );
+      }
     });
   }
 
@@ -242,6 +248,8 @@ class _PlayersScreenState extends State<PlayersScreen> {
               await gameManager.deletePlayer(player.id);
               Navigator.pop(context);
               setState(() {});
+              // Clear any existing snackbar and show new one immediately
+              ScaffoldMessenger.of(context).clearSnackBars();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Player deleted')),
               );
