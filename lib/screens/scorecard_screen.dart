@@ -16,6 +16,10 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
   late GameManager gameManager;
   late List<int> playerOrder; // Indices to track player order
   bool _isReorderingEnabled = false;
+  int? _editingPlayerIndex;
+  int? _editingRoundIndex;
+  final TextEditingController _scoreController = TextEditingController();
+  final FocusNode _scoreFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -24,6 +28,13 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
     currentGame = widget.game;
     // Initialize player order (0, 1, 2, ...)
     playerOrder = List.generate(currentGame.players.length, (i) => i);
+  }
+
+  @override
+  void dispose() {
+    _scoreController.dispose();
+    _scoreFocusNode.dispose();
+    super.dispose();
   }
 
   // Helper function to truncate player names to 10 characters with ellipsis
@@ -290,8 +301,10 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                                       final starterPlayerIndex = playerOrder[starterDisplayIndex];
                                       final isStartingPlayer = playerIndex == starterPlayerIndex;
 
+                                      final isEditing = _editingPlayerIndex == playerIndex && _editingRoundIndex == roundIndex;
+
                                       return GestureDetector(
-                                        onTap: () => _editScore(
+                                        onTap: () => _startEditing(
                                           playerIndex,
                                           roundIndex,
                                           roundScores[roundIndex],
@@ -300,16 +313,42 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                                           width: 50,
                                           height: 32,
                                           decoration: BoxDecoration(
-                                            border: Border.all(color: Colors.grey, width: 0.5),
+                                            border: Border.all(
+                                              color: isEditing ? Colors.blue : Colors.grey,
+                                              width: isEditing ? 2 : 0.5,
+                                            ),
+                                            color: isEditing ? Colors.blue.withOpacity(0.1) : Colors.transparent,
                                           ),
                                           child: Stack(
                                             children: [
                                               Center(
-                                                child: Text(
-                                                  '${roundScores[roundIndex]}',
-                                                  textAlign: TextAlign.center,
-                                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                                                ),
+                                                child: isEditing
+                                                    ? TextField(
+                                                        controller: _scoreController,
+                                                        focusNode: _scoreFocusNode,
+                                                        keyboardType: TextInputType.number,
+                                                        textAlign: TextAlign.center,
+                                                        autofocus: true,
+                                                        style: const TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight: FontWeight.bold,
+                                                        ),
+                                                        decoration: const InputDecoration(
+                                                          border: InputBorder.none,
+                                                          contentPadding: EdgeInsets.zero,
+                                                          isDense: true,
+                                                        ),
+                                                        textInputAction: TextInputAction.next,
+                                                        onSubmitted: (value) => _submitScore(value),
+                                                      )
+                                                    : Text(
+                                                        '${roundScores[roundIndex]}',
+                                                        textAlign: TextAlign.center,
+                                                        style: const TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight: FontWeight.w500,
+                                                        ),
+                                                      ),
                                               ),
                                               if (isStartingPlayer)
                                                 Positioned(
@@ -348,55 +387,62 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
     );
   }
 
-  void _editScore(int playerIndex, int roundIndex, int currentScore) {
-    final scoreController = TextEditingController(text: currentScore.toString());
+  void _startEditing(int playerIndex, int roundIndex, int currentScore) {
+    setState(() {
+      _editingPlayerIndex = playerIndex;
+      _editingRoundIndex = roundIndex;
+      _scoreController.text = currentScore == 0 ? '' : currentScore.toString();
+      _scoreController.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _scoreController.text.length,
+      );
+    });
+    
+    // Request focus after the frame is built to keep the keyboard open
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scoreFocusNode.canRequestFocus) {
+        _scoreFocusNode.requestFocus();
+      }
+    });
+  }
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-            'Edit Score - ${_truncatePlayerName(currentGame.players[playerIndex].name)} - Round ${roundIndex + 1}'),
-        content: TextField(
-          controller: scoreController,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            labelText: 'Score',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final newScore = int.tryParse(scoreController.text) ?? 0;
-              final player = currentGame.players[playerIndex];
-              final round = currentGame.rounds[roundIndex];
+  void _submitScore(String value) async {
+    if (_editingPlayerIndex == null || _editingRoundIndex == null) return;
 
-              final updatedRound = round.copyWith(
-                playerScores: {
-                  ...round.playerScores,
-                  player.id: newScore,
-                },
-              );
+    final newScore = int.tryParse(value) ?? 0;
+    final player = currentGame.players[_editingPlayerIndex!];
+    final roundIndex = _editingRoundIndex!;
+    final round = currentGame.rounds[roundIndex];
 
-              final updatedRounds = [...currentGame.rounds];
-              updatedRounds[roundIndex] = updatedRound;
-
-              setState(() {
-                currentGame = currentGame.copyWith(rounds: updatedRounds);
-              });
-
-              await gameManager.updateGame(currentGame);
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+    final updatedRound = round.copyWith(
+      playerScores: {
+        ...round.playerScores,
+        player.id: newScore,
+      },
     );
+
+    final updatedRounds = [...currentGame.rounds];
+    updatedRounds[roundIndex] = updatedRound;
+
+    setState(() {
+      currentGame = currentGame.copyWith(rounds: updatedRounds);
+    });
+
+    await gameManager.updateGame(currentGame);
+
+    // Move to next player in visual order
+    final currentDisplayIndex = playerOrder.indexOf(_editingPlayerIndex!);
+    if (currentDisplayIndex < playerOrder.length - 1) {
+      final nextPlayerIndex = playerOrder[currentDisplayIndex + 1];
+      final nextScore = currentGame.rounds[roundIndex].playerScores[currentGame.players[nextPlayerIndex].id] ?? 0;
+      _startEditing(nextPlayerIndex, roundIndex, nextScore);
+    } else {
+      // End of round entry
+      setState(() {
+        _editingPlayerIndex = null;
+        _editingRoundIndex = null;
+      });
+    }
   }
 
   Future<void> _addRound() async {
