@@ -15,6 +15,7 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
   late Game currentGame;
   late GameManager gameManager;
   late List<int> playerOrder; // Indices to track player order
+  bool _isReorderingEnabled = false;
 
   @override
   void initState() {
@@ -47,6 +48,14 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
               PopupMenuItem(
                 child: const Text('Add Round'),
                 onTap: () => _addRound(),
+              ),
+              PopupMenuItem(
+                child: Text(_isReorderingEnabled ? 'Disable Reorder' : 'Enable Reorder'),
+                onTap: () {
+                  setState(() {
+                    _isReorderingEnabled = !_isReorderingEnabled;
+                  });
+                },
               ),
               PopupMenuItem(
                 child: const Text('End Game'),
@@ -94,6 +103,7 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                           final player = currentGame.players[playerIndex];
                           return Draggable<int>(
                             data: displayIndex,
+                            maxSimultaneousDrags: _isReorderingEnabled ? 1 : 0,
                             feedback: Container(
                               width: 100,
                               height: 32,
@@ -137,17 +147,18 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                                 });
                               },
                               builder: (context, candidateData, rejectedData) {
+                                final isCandidate = _isReorderingEnabled && candidateData.isNotEmpty;
                                 return Container(
                                   width: 100,
                                   height: 32,
                                   decoration: BoxDecoration(
                                     border: Border.all(
-                                      color: candidateData.isNotEmpty
+                                      color: isCandidate
                                           ? Colors.blue
                                           : Colors.grey,
-                                      width: candidateData.isNotEmpty ? 1 : 0.5,
+                                      width: isCandidate ? 1 : 0.5,
                                     ),
-                                    color: candidateData.isNotEmpty
+                                    color: isCandidate
                                         ? Colors.blue.withOpacity(0.1)
                                         : Colors.transparent,
                                   ),

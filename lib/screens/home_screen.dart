@@ -48,13 +48,14 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             // Menu Section
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 60.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
                     '🎮 Battle Stats',
                     style: Theme.of(context).textTheme.displaySmall,
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 40),
                   _buildMenuButton(
