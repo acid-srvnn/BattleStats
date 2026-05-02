@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:battlestats/models/game.dart';
 import 'package:battlestats/services/game_manager.dart';
+import 'package:uuid/uuid.dart';
 
 class ScorecardScreen extends StatefulWidget {
   final Game game;
@@ -14,7 +15,6 @@ class ScorecardScreen extends StatefulWidget {
 class _ScorecardScreenState extends State<ScorecardScreen> {
   late Game currentGame;
   late GameManager gameManager;
-  late List<int> playerOrder; // Indices to track player order
   bool _isReorderingEnabled = false;
   int? _editingPlayerIndex;
   int? _editingRoundIndex;
@@ -26,8 +26,6 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
     super.initState();
     gameManager = GameManager();
     currentGame = widget.game;
-    // Initialize player order (0, 1, 2, ...)
-    playerOrder = List.generate(currentGame.players.length, (i) => i);
   }
 
   @override
@@ -133,10 +131,9 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                       ),
                       // Reorderable Player rows
                       ...List.generate(
-                        playerOrder.length,
+                        currentGame.players.length,
                         (displayIndex) {
-                          final playerIndex = playerOrder[displayIndex];
-                          final player = currentGame.players[playerIndex];
+                          final player = currentGame.players[displayIndex];
                           return Draggable<int>(
                             data: displayIndex,
                             maxSimultaneousDrags: _isReorderingEnabled ? 1 : 0,
@@ -176,11 +173,15 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                               ),
                             ),
                             child: DragTarget<int>(
-                              onAccept: (sourceIndex) {
+                              onAccept: (sourceIndex) async {
+                                final updatedPlayers = [...currentGame.players];
+                                final player = updatedPlayers.removeAt(sourceIndex);
+                                updatedPlayers.insert(displayIndex, player);
+
                                 setState(() {
-                                  final item = playerOrder.removeAt(sourceIndex);
-                                  playerOrder.insert(displayIndex, item);
+                                  currentGame = currentGame.copyWith(players: updatedPlayers);
                                 });
+                                await gameManager.updateGame(currentGame);
                               },
                               builder: (context, candidateData, rejectedData) {
                                 final isCandidate = _isReorderingEnabled && candidateData.isNotEmpty;
@@ -253,19 +254,18 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                       ),
                       // Total score rows (reordered)
                       ...List.generate(
-                        playerOrder.length,
+                        currentGame.players.length,
                         (displayIndex) {
-                          final playerIndex = playerOrder[displayIndex];
                           return Container(
                             width: 60,
                             height: 32,
                             decoration: BoxDecoration(
                               border: Border.all(color: Colors.grey, width: 0.5),
-                              color: _getScoreColor(scores[playerIndex], scores, currentGame.scoreType),
+                              color: _getScoreColor(scores[displayIndex], scores, currentGame.scoreType),
                             ),
                             child: Center(
                               child: Text(
-                                '${scores[playerIndex]}',
+                                '${scores[displayIndex]}',
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                               ),
                             ),
@@ -309,10 +309,9 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                           ),
                           // Data rows (reordered)
                           ...List.generate(
-                            playerOrder.length,
+                            currentGame.players.length,
                             (displayIndex) {
-                              final playerIndex = playerOrder[displayIndex];
-                              final player = currentGame.players[playerIndex];
+                              final player = currentGame.players[displayIndex];
                               final roundScores = currentGame.rounds
                                   .map((r) => r.playerScores[player.id] ?? 0)
                                   .toList();
@@ -322,19 +321,16 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                                   ...List.generate(
                                     roundScores.length,
                                     (roundIndex) {
-                                      // Auto-rotate starter: R1->player 0, R2->player 1, etc
-                                      final starterDisplayIndex = roundIndex % playerOrder.length;
-                                      final starterPlayerIndex = playerOrder[starterDisplayIndex];
                                       final round = currentGame.rounds[roundIndex];
                                       final isStartingPlayer = player.id == round.startingPlayerId;
-                                      final isEditing = _editingPlayerIndex == playerIndex && _editingRoundIndex == roundIndex;
+                                      final isEditing = _editingPlayerIndex == displayIndex && _editingRoundIndex == roundIndex;
                                       final allScoresInRound = currentGame.players
                                           .map((p) => currentGame.rounds[roundIndex].playerScores[p.id] ?? 0)
                                           .toList();
 
                                       return GestureDetector(
                                         onTap: () => _startEditing(
-                                          playerIndex,
+                                          displayIndex,
                                           roundIndex,
                                           roundScores[roundIndex],
                                         ),
@@ -463,9 +459,8 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
     await gameManager.updateGame(currentGame);
 
     // Move to next player in visual order
-    final currentDisplayIndex = playerOrder.indexOf(_editingPlayerIndex!);
-    if (currentDisplayIndex < playerOrder.length - 1) {
-      final nextPlayerIndex = playerOrder[currentDisplayIndex + 1];
+    if (_editingPlayerIndex! < currentGame.players.length - 1) {
+      final nextPlayerIndex = _editingPlayerIndex! + 1;
       final nextScore = currentGame.rounds[roundIndex].playerScores[currentGame.players[nextPlayerIndex].id] ?? 0;
       _startEditing(nextPlayerIndex, roundIndex, nextScore);
     } else {
@@ -503,17 +498,16 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
 
       if (lastStarterId != null) {
         // Find current display index of last starter
-        final lastStarterPlayerIndex = currentGame.players.indexWhere((p) => p.id == lastStarterId);
-        final lastStarterDisplayIndex = playerOrder.indexOf(lastStarterPlayerIndex);
+        final lastStarterDisplayIndex = currentGame.players.indexWhere((p) => p.id == lastStarterId);
 
         // Next player in visual order
-        final nextDisplayIndex = (lastStarterDisplayIndex + 1) % playerOrder.length;
-        nextStartingPlayerId = currentGame.players[playerOrder[nextDisplayIndex]].id;
+        final nextDisplayIndex = (lastStarterDisplayIndex + 1) % currentGame.players.length;
+        nextStartingPlayerId = currentGame.players[nextDisplayIndex].id;
       }
     }
 
     // Default for first round or fallback
-    nextStartingPlayerId ??= currentGame.players[playerOrder[0]].id;
+    nextStartingPlayerId ??= currentGame.players[0].id;
 
     final newRound = Round(
       roundNumber: currentGame.rounds.length + 1,
@@ -546,12 +540,55 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
+              // 1. Complete current game
               final completedGame = currentGame.copyWith(
                 completedAt: DateTime.now(),
               );
               await gameManager.updateGame(completedGame);
-              Navigator.pop(context);
-              Navigator.pop(context);
+
+              // 2. Create new game with same settings
+              final newGame = Game(
+                id: const Uuid().v4(),
+                name: currentGame.name,
+                players: currentGame.players, // Order is preserved here
+                scoreType: currentGame.scoreType,
+                outValue: currentGame.outValue,
+                rounds: [
+                  Round(
+                    roundNumber: 1,
+                    playerScores: {},
+                    startingPlayerId: currentGame.players[0].id,
+                  )
+                ],
+                createdAt: DateTime.now(),
+              );
+
+              await gameManager.addGame(newGame);
+
+              // 3. Navigate to new scorecard
+              if (!mounted) return;
+              Navigator.pop(context); // Close dialog
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => ScorecardScreen(game: newGame),
+                ),
+              );
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('New game started! 🏁')),
+              );
+            },
+            child: const Text('End & Start New'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final completedGame = currentGame.copyWith(
+                completedAt: DateTime.now(),
+              );
+              await gameManager.updateGame(completedGame);
+              if (!mounted) return;
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Back to home
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Game ended! 🎉')),
               );
